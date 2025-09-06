@@ -52,7 +52,7 @@ codex-auth-docker-run() {
     -v "${cwd}:/workspace/$(basename "${cwd}")" \
     -w "/workspace/$(basename "${cwd}")" \
     $IMAGE_NAME \
-    -c ". /root/.nvm/nvm.sh && codex auth"
+    -c ". /root/.nvm/nvm.sh && screen codex auth"
 }
 
 codex-deactivate() {
