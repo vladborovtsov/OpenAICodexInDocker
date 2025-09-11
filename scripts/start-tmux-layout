@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Default session name to the basename of the current workdir if not provided
+if [ -z "${TMUX_SESSION:-}" ]; then
+  TMUX_SESSION="$(basename "${PWD}" 2>/dev/null || echo workspace)"
+fi
+
+export TERM="${TERM:-xterm-256color}"
+export LANG="${LANG:-C.UTF-8}"
+export TMUX_TMPDIR="${TMUX_TMPDIR:-/tmp}"
+
+# Ensure tmux server is up
+tmux start-server || true
+
+# Allow longer session name in tmux status bar (status-left)
+STATUS_LEFT_LENGTH="${TMUX_STATUS_LEFT_LENGTH:-32}"
+tmux set -g status-left-length "${STATUS_LEFT_LENGTH}" || true
+
+# Create the session if it does not exist
+if ! tmux has-session -t "${TMUX_SESSION}" 2>/dev/null; then
+  # First tab: codex (kept alive with exec bash -l)
+  tmux new-session -d -s "${TMUX_SESSION}" -n codex \
+    "/bin/bash" -lc "codex || true; exec bash -l" || {
+      echo "[start-tmux-layout] Failed to create tmux session: ${TMUX_SESSION}" >&2
+      exec /bin/bash -l
+    }
+  # Second tab: shell
+  tmux new-window  -t "${TMUX_SESSION}:" -n shell "/bin/bash -l" || true
+  # Third tab: shell
+  tmux new-window  -t "${TMUX_SESSION}:" -n shell "/bin/bash -l" || true
+  # Fourth tab: htop
+  tmux new-window  -t "${TMUX_SESSION}:" -n htop  "htop" || true
+  # Make Codex window active by default (select by name to avoid index issues)
+  tmux select-window -t "${TMUX_SESSION}:codex" || true
+fi
+
+# Ensure Codex window is selected on attach
+ tmux select-window -t "${TMUX_SESSION}:codex" || true
+# Try to attach; on failure, show diagnostics and fall back to a shell
+if ! exec tmux attach -t "${TMUX_SESSION}"; then
+  echo "[start-tmux-layout] tmux attach failed. Diagnostics:" >&2
+  tmux list-sessions 2>&1 || true
+  ps -ef | grep tmux | grep -v grep || true
+  echo "TERM=$TERM LANG=$LANG" >&2
+  exec /bin/bash -l
+fi

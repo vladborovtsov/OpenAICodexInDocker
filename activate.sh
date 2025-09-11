@@ -48,10 +48,14 @@ codex-docker-shell() {
     esac
   fi
   docker run --rm -it \
+    --entrypoint "/bin/bash" \
     -v "$CODEX_CONFIG_PATH:/root/.codex" \
     -v "${cwd}:/workspace/$(basename "${cwd}")" \
     -w "/workspace/$(basename "${cwd}")" \
-    $IMAGE_NAME
+    -e TERM="${TERM:-xterm-256color}" \
+    -e TMUX_SESSION="$(basename "${cwd}")" \
+    "$IMAGE_NAME" \
+    -lc "start-tmux-layout"
 }
 
 codex-auth-docker-run() {
