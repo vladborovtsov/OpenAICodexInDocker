@@ -10,43 +10,16 @@ export TERM="${TERM:-xterm-256color}"
 export LANG="${LANG:-C.UTF-8}"
 export TMUX_TMPDIR="${TMUX_TMPDIR:-/tmp}"
 
-# Ensure tmux server is up
-tmux start-server || true
-
 # Allow longer session name in tmux status bar (status-left)
 STATUS_LEFT_LENGTH="${TMUX_STATUS_LEFT_LENGTH:-32}"
-# Apply globally for new sessions
-(tmux set-option -g -q status-left-length "${STATUS_LEFT_LENGTH}" || true)
 # Status-left content: show session name in yellow; most text uses default light gray
 TMUX_STATUS_LEFT="${TMUX_STATUS_LEFT:-#[fg=yellow] #S #[fg=default]}"
-(tmux set-option -g -q status-left "$TMUX_STATUS_LEFT" || true)
 
 # Style the tmux status line so the active tab/window is brighter
 # You can override these via environment variables if desired.
 TMUX_STATUS_STYLE="${TMUX_STATUS_STYLE:-bg=colour22,fg=colour250}"
 TMUX_WINDOW_STATUS_STYLE="${TMUX_WINDOW_STATUS_STYLE:-bg=colour22,fg=colour250}"
 TMUX_WINDOW_STATUS_CURRENT_STYLE="${TMUX_WINDOW_STATUS_CURRENT_STYLE:-bg=colour22,fg=colour120,bold}"
-# Apply styles globally (quietly, ignore errors on older tmux versions)
-(tmux set-option -g -q status-style "$TMUX_STATUS_STYLE" || true)
-(tmux set-option -g -q window-status-style "$TMUX_WINDOW_STATUS_STYLE" || true)
-(tmux set-option -g -q window-status-current-style "$TMUX_WINDOW_STATUS_CURRENT_STYLE" || true)
-# Also set legacy options for older tmux versions (< 2.9); -q ignores errors on newer versions where these were removed.
-# Status line (global)
-(tmux set-option -g -q status-bg "colour22" || true)
-(tmux set-option -g -q status-fg "colour250" || true)
-# Inactive window tabs
-(tmux set-option -g -q window-status-bg "colour22" || true)
-(tmux set-option -g -q window-status-fg "colour250" || true)
-(tmux set-option -g -q window-status-attr "none" || true)
-# Active window tab brighter
-(tmux set-option -g -q window-status-current-bg "colour22" || true)
-(tmux set-option -g -q window-status-current-fg "colour120" || true)
-(tmux set-option -g -q window-status-current-attr "bold" || true)
-
-# Keybinding: Ctrl-b then Q to kill ALL tmux sessions (with confirmation)
-# Bind explicitly in the root key table to avoid table/override issues, and unbind any previous mapping.
-tmux unbind-key -T root Q 2>/dev/null || true
-tmux bind-key -T root Q confirm-before -p "Kill ALL tmux sessions and exit container? (y/n)" kill-server || true
 
 # Create the session if it does not exist
 if ! tmux has-session -t "${TMUX_SESSION}" 2>/dev/null; then
@@ -63,34 +36,31 @@ if ! tmux has-session -t "${TMUX_SESSION}" 2>/dev/null; then
   # Fourth tab: htop
   tmux new-window  -t "${TMUX_SESSION}:" -n htop  "htop" || true
   # Make Codex window active by default (select by name to avoid index issues)
-  tmux select-window -t "${TMUX_SESSION}:codex" || true
+  # (Selection will be done below after configuration.)
 fi
 
-# Re-assert the kill-all binding after any session creation, in case earlier bind failed
-# (Binding is global; this is idempotent.)
-tmux unbind-key -T root Q 2>/dev/null || true
-tmux bind-key -T root Q confirm-before -p "Kill ALL tmux sessions? (y/n)" kill-server || true
+# After ensuring a session exists, set up a single kill-all binding
+(tmux unbind-key -T root Q >/dev/null 2>&1 || true)
+(tmux bind-key -T root Q confirm-before -p "Kill ALL tmux sessions and exit container? (y/n)" kill-server >/dev/null 2>&1 || true)
 
-# Ensure longer status-left length for this specific session (helps if session already existed)
-(tmux set-option -t "${TMUX_SESSION}" -q status-left-length "${STATUS_LEFT_LENGTH}" || true)
-# Also set the left status content (session name in yellow)
-(tmux set-option -t "${TMUX_SESSION}" -q status-left "$TMUX_STATUS_LEFT" || true)
-# Re-apply styles for this specific session too (covers already-existing sessions)
-(tmux set-option -t "${TMUX_SESSION}" -q status-style "$TMUX_STATUS_STYLE" || true)
-(tmux set-option -t "${TMUX_SESSION}" -q window-status-style "$TMUX_WINDOW_STATUS_STYLE" || true)
-(tmux set-option -t "${TMUX_SESSION}" -q window-status-current-style "$TMUX_WINDOW_STATUS_CURRENT_STYLE" || true)
+# Apply configuration to the specific session (works whether it was created or pre-existing)
+(tmux set-option -t "${TMUX_SESSION}" -q status-left-length "${STATUS_LEFT_LENGTH}" >/dev/null 2>&1 || true)
+(tmux set-option -t "${TMUX_SESSION}" -q status-left "$TMUX_STATUS_LEFT" >/dev/null 2>&1 || true)
+(tmux set-option -t "${TMUX_SESSION}" -q status-style "$TMUX_STATUS_STYLE" >/dev/null 2>&1 || true)
+(tmux set-option -t "${TMUX_SESSION}" -q window-status-style "$TMUX_WINDOW_STATUS_STYLE" >/dev/null 2>&1 || true)
+(tmux set-option -t "${TMUX_SESSION}" -q window-status-current-style "$TMUX_WINDOW_STATUS_CURRENT_STYLE" >/dev/null 2>&1 || true)
 # Legacy per-session options for older tmux versions
-(tmux set-option -t "${TMUX_SESSION}" -q status-bg "default" || true)
-(tmux set-option -t "${TMUX_SESSION}" -q status-fg "colour250" || true)
-(tmux set-option -t "${TMUX_SESSION}" -q window-status-bg "default" || true)
-(tmux set-option -t "${TMUX_SESSION}" -q window-status-fg "colour250" || true)
-(tmux set-option -t "${TMUX_SESSION}" -q window-status-attr "none" || true)
-(tmux set-option -t "${TMUX_SESSION}" -q window-status-current-bg "default" || true)
-(tmux set-option -t "${TMUX_SESSION}" -q window-status-current-fg "colour120" || true)
-(tmux set-option -t "${TMUX_SESSION}" -q window-status-current-attr "bold" || true)
+(tmux set-option -t "${TMUX_SESSION}" -q status-bg "default" >/dev/null 2>&1 || true)
+(tmux set-option -t "${TMUX_SESSION}" -q status-fg "colour250" >/dev/null 2>&1 || true)
+(tmux set-option -t "${TMUX_SESSION}" -q window-status-bg "default" >/dev/null 2>&1 || true)
+(tmux set-option -t "${TMUX_SESSION}" -q window-status-fg "colour250" >/dev/null 2>&1 || true)
+(tmux set-option -t "${TMUX_SESSION}" -q window-status-attr "none" >/dev/null 2>&1 || true)
+(tmux set-option -t "${TMUX_SESSION}" -q window-status-current-bg "default" >/dev/null 2>&1 || true)
+(tmux set-option -t "${TMUX_SESSION}" -q window-status-current-fg "colour120" >/dev/null 2>&1 || true)
+(tmux set-option -t "${TMUX_SESSION}" -q window-status-current-attr "bold" >/dev/null 2>&1 || true)
 
 # Ensure Codex window is selected on attach
-tmux select-window -t "${TMUX_SESSION}:codex" || true
+(tmux select-window -t "${TMUX_SESSION}:codex" >/dev/null 2>&1 || true)
 # Try to attach; on failure, show diagnostics and fall back to a shell
 if ! exec tmux attach -t "${TMUX_SESSION}"; then
   echo "[start-tmux-layout] tmux attach failed. Diagnostics:" >&2
