@@ -26,12 +26,22 @@ fi
 unset _codex_script_path
 
 codex-docker-build() {
+  # Accept optional flag: --no-cache
+  local no_cache_flag=""
+  if [ "${1-}" = "--no-cache" ]; then
+    no_cache_flag="--no-cache"
+    shift
+  fi
+  if [ -n "${1-}" ]; then
+    echo "Usage: codex-docker-build [--no-cache]" >&2
+    return 2
+  fi
   if [ -z "$CODEX_REPO_DIR" ]; then
     echo "Failed to locate repository directory for docker build." >&2
     return 1
   fi
   echo "Building Docker image '$IMAGE_NAME' from: $CODEX_REPO_DIR" >&2
-  docker build --pull -t "$IMAGE_NAME" "$CODEX_REPO_DIR"
+  docker build --pull ${no_cache_flag} -t "$IMAGE_NAME" "$CODEX_REPO_DIR"
 }
 
 codex-docker-shell() {
