@@ -17,6 +17,31 @@ tmux start-server || true
 STATUS_LEFT_LENGTH="${TMUX_STATUS_LEFT_LENGTH:-32}"
 # Apply globally for new sessions
 (tmux set-option -g -q status-left-length "${STATUS_LEFT_LENGTH}" || true)
+# Status-left content: show session name in yellow; most text uses default light gray
+TMUX_STATUS_LEFT="${TMUX_STATUS_LEFT:-#[fg=yellow] #S #[fg=default]}"
+(tmux set-option -g -q status-left "$TMUX_STATUS_LEFT" || true)
+
+# Style the tmux status line so the active tab/window is brighter
+# You can override these via environment variables if desired.
+TMUX_STATUS_STYLE="${TMUX_STATUS_STYLE:-bg=colour22,fg=colour250}"
+TMUX_WINDOW_STATUS_STYLE="${TMUX_WINDOW_STATUS_STYLE:-bg=colour22,fg=colour250}"
+TMUX_WINDOW_STATUS_CURRENT_STYLE="${TMUX_WINDOW_STATUS_CURRENT_STYLE:-bg=colour22,fg=colour120,bold}"
+# Apply styles globally (quietly, ignore errors on older tmux versions)
+(tmux set-option -g -q status-style "$TMUX_STATUS_STYLE" || true)
+(tmux set-option -g -q window-status-style "$TMUX_WINDOW_STATUS_STYLE" || true)
+(tmux set-option -g -q window-status-current-style "$TMUX_WINDOW_STATUS_CURRENT_STYLE" || true)
+# Also set legacy options for older tmux versions (< 2.9); -q ignores errors on newer versions where these were removed.
+# Status line (global)
+(tmux set-option -g -q status-bg "colour22" || true)
+(tmux set-option -g -q status-fg "colour250" || true)
+# Inactive window tabs
+(tmux set-option -g -q window-status-bg "colour22" || true)
+(tmux set-option -g -q window-status-fg "colour250" || true)
+(tmux set-option -g -q window-status-attr "none" || true)
+# Active window tab brighter
+(tmux set-option -g -q window-status-current-bg "colour22" || true)
+(tmux set-option -g -q window-status-current-fg "colour120" || true)
+(tmux set-option -g -q window-status-current-attr "bold" || true)
 
 # Keybinding: Ctrl-b then Q to kill ALL tmux sessions (with confirmation)
 # Bind explicitly in the root key table to avoid table/override issues, and unbind any previous mapping.
@@ -48,6 +73,21 @@ tmux bind-key -T root Q confirm-before -p "Kill ALL tmux sessions? (y/n)" kill-s
 
 # Ensure longer status-left length for this specific session (helps if session already existed)
 (tmux set-option -t "${TMUX_SESSION}" -q status-left-length "${STATUS_LEFT_LENGTH}" || true)
+# Also set the left status content (session name in yellow)
+(tmux set-option -t "${TMUX_SESSION}" -q status-left "$TMUX_STATUS_LEFT" || true)
+# Re-apply styles for this specific session too (covers already-existing sessions)
+(tmux set-option -t "${TMUX_SESSION}" -q status-style "$TMUX_STATUS_STYLE" || true)
+(tmux set-option -t "${TMUX_SESSION}" -q window-status-style "$TMUX_WINDOW_STATUS_STYLE" || true)
+(tmux set-option -t "${TMUX_SESSION}" -q window-status-current-style "$TMUX_WINDOW_STATUS_CURRENT_STYLE" || true)
+# Legacy per-session options for older tmux versions
+(tmux set-option -t "${TMUX_SESSION}" -q status-bg "default" || true)
+(tmux set-option -t "${TMUX_SESSION}" -q status-fg "colour250" || true)
+(tmux set-option -t "${TMUX_SESSION}" -q window-status-bg "default" || true)
+(tmux set-option -t "${TMUX_SESSION}" -q window-status-fg "colour250" || true)
+(tmux set-option -t "${TMUX_SESSION}" -q window-status-attr "none" || true)
+(tmux set-option -t "${TMUX_SESSION}" -q window-status-current-bg "default" || true)
+(tmux set-option -t "${TMUX_SESSION}" -q window-status-current-fg "colour120" || true)
+(tmux set-option -t "${TMUX_SESSION}" -q window-status-current-attr "bold" || true)
 
 # Ensure Codex window is selected on attach
 tmux select-window -t "${TMUX_SESSION}:codex" || true
