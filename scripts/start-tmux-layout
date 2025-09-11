@@ -20,6 +20,12 @@ TMUX_STATUS_LEFT="${TMUX_STATUS_LEFT:-#[fg=yellow] #S #[fg=default]}"
 TMUX_STATUS_STYLE="${TMUX_STATUS_STYLE:-bg=colour22,fg=colour250}"
 TMUX_WINDOW_STATUS_STYLE="${TMUX_WINDOW_STATUS_STYLE:-bg=colour22,fg=colour250}"
 TMUX_WINDOW_STATUS_CURRENT_STYLE="${TMUX_WINDOW_STATUS_CURRENT_STYLE:-bg=colour22,fg=colour120,bold}"
+# Ensure activity/bell styles don't override current style perception
+TMUX_WINDOW_STATUS_ACTIVITY_STYLE="${TMUX_WINDOW_STATUS_ACTIVITY_STYLE:-bg=colour22,fg=colour250}"
+TMUX_WINDOW_STATUS_BELL_STYLE="${TMUX_WINDOW_STATUS_BELL_STYLE:-bg=colour22,fg=colour250,bold}"
+# Use neutral formats with no inline colors so style options fully control colors
+TMUX_WINDOW_STATUS_FORMAT="${TMUX_WINDOW_STATUS_FORMAT:-#I: #W#{?window_flags,#{window_flags}, }}"
+TMUX_WINDOW_STATUS_CURRENT_FORMAT="${TMUX_WINDOW_STATUS_CURRENT_FORMAT:-#I: #W#{?window_flags,#{window_flags}, }}"
 
 # Create the session if it does not exist
 if ! tmux has-session -t "${TMUX_SESSION}" 2>/dev/null; then
@@ -49,6 +55,21 @@ fi
 (tmux set-option -t "${TMUX_SESSION}" -q status-style "$TMUX_STATUS_STYLE" >/dev/null 2>&1 || true)
 (tmux set-option -t "${TMUX_SESSION}" -q window-status-style "$TMUX_WINDOW_STATUS_STYLE" >/dev/null 2>&1 || true)
 (tmux set-option -t "${TMUX_SESSION}" -q window-status-current-style "$TMUX_WINDOW_STATUS_CURRENT_STYLE" >/dev/null 2>&1 || true)
+# Also set styles globally to ensure color changes take effect if session-specific was not applied
+(tmux set-option -g -q status-style "$TMUX_STATUS_STYLE" >/dev/null 2>&1 || true)
+(tmux set-option -g -q window-status-style "$TMUX_WINDOW_STATUS_STYLE" >/dev/null 2>&1 || true)
+(tmux set-option -g -q window-status-current-style "$TMUX_WINDOW_STATUS_CURRENT_STYLE" >/dev/null 2>&1 || true)
+# Ensure formats are neutral so styles above apply
+(tmux set-option -t "${TMUX_SESSION}" -q window-status-format "$TMUX_WINDOW_STATUS_FORMAT" >/dev/null 2>&1 || true)
+(tmux set-option -t "${TMUX_SESSION}" -q window-status-current-format "$TMUX_WINDOW_STATUS_CURRENT_FORMAT" >/dev/null 2>&1 || true)
+# Also set globally after a session exists to ensure consistent behavior
+(tmux set-option -g -q window-status-format "$TMUX_WINDOW_STATUS_FORMAT" >/dev/null 2>&1 || true)
+(tmux set-option -g -q window-status-current-format "$TMUX_WINDOW_STATUS_CURRENT_FORMAT" >/dev/null 2>&1 || true)
+# Prevent activity/bell from changing tab color unless it is current
+(tmux set-option -t "${TMUX_SESSION}" -q monitor-activity off >/dev/null 2>&1 || true)
+(tmux set-option -t "${TMUX_SESSION}" -q visual-activity off >/dev/null 2>&1 || true)
+(tmux set-option -t "${TMUX_SESSION}" -q window-status-activity-style "$TMUX_WINDOW_STATUS_ACTIVITY_STYLE" >/dev/null 2>&1 || true)
+(tmux set-option -t "${TMUX_SESSION}" -q window-status-bell-style "$TMUX_WINDOW_STATUS_BELL_STYLE" >/dev/null 2>&1 || true)
 # Legacy per-session options for older tmux versions
 (tmux set-option -t "${TMUX_SESSION}" -q status-bg "default" >/dev/null 2>&1 || true)
 (tmux set-option -t "${TMUX_SESSION}" -q status-fg "colour250" >/dev/null 2>&1 || true)
