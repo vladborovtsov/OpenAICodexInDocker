@@ -17,6 +17,11 @@ tmux start-server || true
 STATUS_LEFT_LENGTH="${TMUX_STATUS_LEFT_LENGTH:-32}"
 tmux set -g status-left-length "${STATUS_LEFT_LENGTH}" || true
 
+# Keybinding: Ctrl-b then Q to kill ALL tmux sessions (with confirmation)
+# Bind explicitly in the root key table to avoid table/override issues, and unbind any previous mapping.
+tmux unbind-key -T root Q 2>/dev/null || true
+tmux bind-key -T root Q confirm-before -p "Kill ALL tmux sessions and exit container? (y/n)" kill-server || true
+
 # Create the session if it does not exist
 if ! tmux has-session -t "${TMUX_SESSION}" 2>/dev/null; then
   # First tab: codex (kept alive with exec bash -l)
@@ -35,6 +40,11 @@ if ! tmux has-session -t "${TMUX_SESSION}" 2>/dev/null; then
   tmux select-window -t "${TMUX_SESSION}:codex" || true
 fi
 
+# Re-assert the kill-all binding after any session creation, in case earlier bind failed
+# (Binding is global; this is idempotent.)
+tmux unbind-key -T root Q 2>/dev/null || true
+tmux bind-key -T root Q confirm-before -p "Kill ALL tmux sessions? (y/n)" kill-server || true
+
 # Ensure Codex window is selected on attach
  tmux select-window -t "${TMUX_SESSION}:codex" || true
 # Try to attach; on failure, show diagnostics and fall back to a shell
@@ -42,6 +52,6 @@ if ! exec tmux attach -t "${TMUX_SESSION}"; then
   echo "[start-tmux-layout] tmux attach failed. Diagnostics:" >&2
   tmux list-sessions 2>&1 || true
   ps -ef | grep tmux | grep -v grep || true
-  echo "TERM=$TERM LANG=$LANG" >&2
+  echo "TERM=$TERM LANG=$LANG TMUX=${TMUX-} TMUX_TMPDIR=${TMUX_TMPDIR-}" >&2
   exec /bin/bash -l
 fi
