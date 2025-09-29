@@ -46,8 +46,8 @@ if ! tmux has-session -t "${TMUX_SESSION}" 2>/dev/null; then
 fi
 
 # After ensuring a session exists, set up a single kill-all binding
-(tmux unbind-key -T root Q >/dev/null 2>&1 || true)
-(tmux bind-key -T root Q confirm-before -p "Kill ALL tmux sessions and exit container? (y/n)" kill-server >/dev/null 2>&1 || true)
+(tmux unbind-key Q >/dev/null 2>&1 || true)
+(tmux bind-key Q confirm-before -p "Kill ALL tmux sessions and exit container? (y/n)" kill-server >/dev/null 2>&1 || true)
 
 # Apply configuration to the specific session (works whether it was created or pre-existing)
 (tmux set-option -t "${TMUX_SESSION}" -q status-left-length "${STATUS_LEFT_LENGTH}" >/dev/null 2>&1 || true)
