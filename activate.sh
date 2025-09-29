@@ -7,6 +7,7 @@
 
 IMAGE_NAME="my-codex-image"
 CODEX_CONFIG_PATH="$HOME/.codex-docker-config"
+CODEX_TERM_TITLE_ENABLE="${CODEX_ITERM_TITLE_ENABLE:-1}" # Control whether iTerm/tab title tweaks are applied (default: on). Set to "0" to disable.
 
 # Determine the directory of this script (the repo root), even when sourced from elsewhere.
 # Works with Bash and most POSIX shells; realpath fallback if available.
@@ -57,6 +58,21 @@ codex-docker-shell() {
       *) echo "Canceled." >&2; return 1 ;;
     esac
   fi
+
+
+  if [ "${CODEX_ITERM_TITLE_ENABLE}" = "1" ]; then
+    local _codex_title="codex+$(basename "${cwd}")"
+    if [ -n "${ITERM_SESSION_ID-}" ] || [ "${TERM_PROGRAM-}" = "iTerm.app" ]; then
+      if command -v base64 >/dev/null 2>&1; then
+        printf '\033]1337;SetUserVar=%s=%s\007' "JOB_NAME" "$(printf "%s" "${_codex_title}" | base64)" 2>/dev/null || true
+      fi
+    fi
+    # OSC 1: icon name (many terminals use this as a title source)
+    printf '\033]1;%s\007' "${_codex_title}" 2>/dev/null || true
+    # OSC 0: window title (tab title)
+    printf '\033]0;%s\007' "${_codex_title}" 2>/dev/null || true
+  fi
+
   docker run --rm -it \
     --entrypoint "/bin/bash" \
     -v "$CODEX_CONFIG_PATH:/root/.codex" \
