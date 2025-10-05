@@ -6,6 +6,33 @@ if [ -z "${TMUX_SESSION:-}" ]; then
   TMUX_SESSION="$(basename "${PWD}" 2>/dev/null || echo workspace)"
 fi
 
+# Sanitize the tmux session name to avoid special characters breaking tmux
+# Replace any non-alphanumeric with '_', trim/collapse '_', ensure non-empty, and limit length to 32
+_sanitize_tmux_name() {
+  # Use POSIX sed to transform the name
+  # 1) Replace any run of non-alphanumeric characters with '_'
+  # 2) Trim leading/trailing '_'
+  # 3) Collapse multiple '_' to single
+  # 4) Ensure non-empty; fallback to "workspace"
+  # 5) Truncate to 32 chars (tmux-friendly)
+  local input
+  input="$1"
+  # Replace non-alphanumeric chars with '_'
+  input="$(printf '%s' "$input" | sed -E 's/[^A-Za-z0-9]+/_/g')"
+  # Trim leading/trailing '_'
+  input="$(printf '%s' "$input" | sed -E 's/^_+//; s/_+$//')"
+  # Collapse multiple '_'
+  input="$(printf '%s' "$input" | sed -E 's/_{2,}/_/g')"
+  # Fallback if empty
+  if [ -z "$input" ]; then
+    input="workspace"
+  fi
+  # Truncate to 32 characters
+  printf '%.32s' "$input"
+}
+
+TMUX_SESSION="$(_sanitize_tmux_name "$TMUX_SESSION")"
+
 export TERM="${TERM:-xterm-256color}"
 export LANG="${LANG:-C.UTF-8}"
 export TMUX_TMPDIR="${TMUX_TMPDIR:-/tmp}"
