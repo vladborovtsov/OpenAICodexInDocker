@@ -42,7 +42,19 @@ codex-docker-build() {
     return 1
   fi
   echo "Building Docker image '$IMAGE_NAME' from: $CODEX_REPO_DIR" >&2
-  docker build --pull ${no_cache_flag} -t "$IMAGE_NAME" "$CODEX_REPO_DIR"
+  local old_image_id
+  old_image_id=$(docker images -q "$IMAGE_NAME" 2>/dev/null)
+
+  if docker build --pull ${no_cache_flag} -t "$IMAGE_NAME" "$CODEX_REPO_DIR"; then
+    if [ -n "$old_image_id" ]; then
+      local new_image_id
+      new_image_id=$(docker images -q "$IMAGE_NAME" 2>/dev/null)
+      if [ "$old_image_id" != "$new_image_id" ]; then
+        echo "Cleaning up previous image version ($old_image_id)..." >&2
+        docker rmi "$old_image_id" 2>/dev/null || true
+      fi
+    fi
+  fi
 }
 
 codex-docker-shell() {
