@@ -87,9 +87,11 @@ codex-docker-shell() {
 
   docker run --rm -it \
     --entrypoint "/bin/bash" \
+    -v "/etc/localtime:/etc/localtime:ro" \
     -v "$CODEX_CONFIG_PATH:/root/.codex" \
     -v "${cwd}:/workspace/$(basename "${cwd}")" \
     -w "/workspace/$(basename "${cwd}")" \
+    -e TZ="${TZ:-$(readlink /etc/localtime | sed -E 's/.*zoneinfo\/(.*)/\1/' 2>/dev/null || echo "UTC")}" \
     -e TERM="${TERM:-xterm-256color}" \
     -e TMUX_SESSION="$(basename "${cwd}")" \
     "$IMAGE_NAME" \
@@ -112,9 +114,11 @@ codex-auth-docker-run() {
   docker run --rm -it \
     --network="host" \
     --entrypoint="/bin/bash" \
+    -v "/etc/localtime:/etc/localtime:ro" \
     -v "$CODEX_CONFIG_PATH:/root/.codex" \
     -v "${cwd}:/workspace/$(basename "${cwd}")" \
     -w "/workspace/$(basename "${cwd}")" \
+    -e TZ="${TZ:-$(readlink /etc/localtime | sed -E 's/.*zoneinfo\/(.*)/\1/' 2>/dev/null || echo "UTC")}" \
     $IMAGE_NAME \
     -c ". /root/.nvm/nvm.sh && screen codex auth"
 }
