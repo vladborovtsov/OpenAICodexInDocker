@@ -1,3 +1,8 @@
+# ⚠️ ARCHIVED REPOSITORY ⚠️
+This repository is archived and has been moved to: **https://github.com/vladborovtsov/ai-cli-in-docker**
+
+---
+
 ## OpenAI Codex in Docker
 
 Run the OpenAI Codex CLI inside Docker to keep your host clean while persisting CLI auth/config on your machine. Targets the OpenAI Codex project: https://github.com/openai/codex.
