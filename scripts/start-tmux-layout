@@ -39,8 +39,11 @@ export TMUX_TMPDIR="${TMUX_TMPDIR:-/tmp}"
 
 # Allow longer session name in tmux status bar (status-left)
 STATUS_LEFT_LENGTH="${TMUX_STATUS_LEFT_LENGTH:-32}"
+STATUS_RIGHT_LENGTH="${TMUX_STATUS_RIGHT_LENGTH:-64}"
 # Status-left content: show session name in yellow; most text uses default light gray
 TMUX_STATUS_LEFT="${TMUX_STATUS_LEFT:-#[fg=yellow] #S #[fg=default]}"
+# Status-right content: show time and date
+TMUX_STATUS_RIGHT="${TMUX_STATUS_RIGHT:-#[fg=default] %Y-%m-%d %H:%M #[fg=yellow]#H }"
 
 # Style the tmux status line so the active tab/window is brighter
 # You can override these via environment variables if desired.
@@ -79,6 +82,8 @@ fi
 # Apply configuration to the specific session (works whether it was created or pre-existing)
 (tmux set-option -t "${TMUX_SESSION}" -q status-left-length "${STATUS_LEFT_LENGTH}" >/dev/null 2>&1 || true)
 (tmux set-option -t "${TMUX_SESSION}" -q status-left "$TMUX_STATUS_LEFT" >/dev/null 2>&1 || true)
+(tmux set-option -t "${TMUX_SESSION}" -q status-right-length "${STATUS_RIGHT_LENGTH}" >/dev/null 2>&1 || true)
+(tmux set-option -t "${TMUX_SESSION}" -q status-right "$TMUX_STATUS_RIGHT" >/dev/null 2>&1 || true)
 (tmux set-option -t "${TMUX_SESSION}" -q status-style "$TMUX_STATUS_STYLE" >/dev/null 2>&1 || true)
 (tmux set-option -t "${TMUX_SESSION}" -q window-status-style "$TMUX_WINDOW_STATUS_STYLE" >/dev/null 2>&1 || true)
 (tmux set-option -t "${TMUX_SESSION}" -q window-status-current-style "$TMUX_WINDOW_STATUS_CURRENT_STYLE" >/dev/null 2>&1 || true)
@@ -87,9 +92,13 @@ fi
 (tmux set-option -g -q window-status-style "$TMUX_WINDOW_STATUS_STYLE" >/dev/null 2>&1 || true)
 (tmux set-option -g -q window-status-current-style "$TMUX_WINDOW_STATUS_CURRENT_STYLE" >/dev/null 2>&1 || true)
 # Ensure formats are neutral so styles above apply
+(tmux set-option -t "${TMUX_SESSION}" -q status-right-length "${STATUS_RIGHT_LENGTH}" >/dev/null 2>&1 || true)
+(tmux set-option -t "${TMUX_SESSION}" -q status-right "$TMUX_STATUS_RIGHT" >/dev/null 2>&1 || true)
 (tmux set-option -t "${TMUX_SESSION}" -q window-status-format "$TMUX_WINDOW_STATUS_FORMAT" >/dev/null 2>&1 || true)
 (tmux set-option -t "${TMUX_SESSION}" -q window-status-current-format "$TMUX_WINDOW_STATUS_CURRENT_FORMAT" >/dev/null 2>&1 || true)
 # Also set globally after a session exists to ensure consistent behavior
+(tmux set-option -g -q status-right-length "${STATUS_RIGHT_LENGTH}" >/dev/null 2>&1 || true)
+(tmux set-option -g -q status-right "$TMUX_STATUS_RIGHT" >/dev/null 2>&1 || true)
 (tmux set-option -g -q window-status-format "$TMUX_WINDOW_STATUS_FORMAT" >/dev/null 2>&1 || true)
 (tmux set-option -g -q window-status-current-format "$TMUX_WINDOW_STATUS_CURRENT_FORMAT" >/dev/null 2>&1 || true)
 # Prevent activity/bell from changing tab color unless it is current
